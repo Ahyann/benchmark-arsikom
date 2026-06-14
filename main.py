@@ -4,11 +4,11 @@
   Jalankan file ini untuk menjalankan semua benchmark.
 =============================================================
   Struktur file:
-    main.py               ← file ini
-    benchmark_a_cpu.py    ← CPU Benchmark (Sorting)
-    benchmark_b_float.py  ← Floating Point (Matrix Multiply)
-    benchmark_c_memory.py ← Memory Benchmark (Search)
-    benchmark_d_storage.py← Storage Benchmark (Read/Write)
+    main.py               <- file ini
+    benchmark_a_cpu.py    <- CPU Benchmark (Sorting)
+    benchmark_b_float.py  <- Floating Point (Matrix Multiply)
+    benchmark_c_memory.py <- Memory Benchmark (Search)
+    benchmark_d_storage.py<- Storage Benchmark (Read/Write)
 =============================================================
 """
 
@@ -21,9 +21,9 @@ import benchmark_d_storage
 
 
 def print_system_info():
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 70)
     print("  SYSTEM INFORMATION")
-    print("=" * 65)
+    print("=" * 70)
     print(f"  OS           : {platform.system()} {platform.release()}")
     print(f"  Processor    : {platform.processor()}")
     print(f"  CPU Cores    : {psutil.cpu_count(logical=False)} Physical, "
@@ -31,18 +31,21 @@ def print_system_info():
     mem = psutil.virtual_memory()
     print(f"  Total RAM    : {mem.total / (1024**3):.2f} GB")
     print(f"  Python       : {platform.python_version()}")
-    print("=" * 65)
+    print("=" * 70)
 
 
 def print_summary(cpu_r, fp_r, mem_r, stor_r):
-    print("\n\n" + "=" * 65)
+    print("\n\n" + "=" * 70)
     print("  RINGKASAN HASIL BENCHMARK")
-    print("=" * 65)
+    print("=" * 70)
 
     print("\n[A] CPU Benchmark (Sorting)")
-    print(f"  {'Dataset':<22} {'Time (s)':<15} {'CPU (%)':<15} {'Throughput (items/s)'}")
+    print(f"  {'Dataset':<20} {'Algoritma':<15} {'Time (s)':<15} {'CPU (%)':<12} {'Throughput'}")
     for r in cpu_r:
-        print(f"  {r['dataset']:<22} {r['exec_time']:<15.4f} {r['cpu_usage']:<15.2f} {r['throughput']:,.0f}")
+        if r.get("skip"):
+            print(f"  {r['dataset']:<20} {r['algoritma']:<15} {'skip (recursion limit)'}")
+        else:
+            print(f"  {r['dataset']:<20} {r['algoritma']:<15} {r['exec_time']:<15.4f} {r['cpu_usage']:<12.2f} {r['throughput']:,.0f}")
 
     print("\n[B] Floating Point (Matrix Multiply)")
     print(f"  {'Matrix':<20} {'Time (s)':<15} {'CPU (%)':<15} {'RAM (MB)'}")
@@ -59,15 +62,15 @@ def print_summary(cpu_r, fp_r, mem_r, stor_r):
     for r in stor_r:
         print(f"  {r['dataset']:<15} {r['write_speed']:<20.2f} {r['read_speed']:<20.2f} {r['throughput']:.2f} MB/s")
 
-    print("\n" + "=" * 65)
-    print("  Benchmark selesai! Screenshot hasil ini untuk laporan.")
-    print("=" * 65 + "\n")
+    print("\n" + "=" * 70)
+    print("  Benchmark selesai!")
+    print("=" * 70 + "\n")
 
 
 def main():
-    print("=" * 65)
+    print("=" * 70)
     print("  BENCHMARK PROGRAM — UAS ARSITEKTUR & ORGANISASI KOMPUTER")
-    print("=" * 65)
+    print("=" * 70)
 
     print_system_info()
 
