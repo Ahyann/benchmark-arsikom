@@ -43,47 +43,57 @@ class ResourceMonitor:
         return sum(samples) / len(samples) if samples else 0.0
 
 
-# ── QUICK SORT ──────────────────────────────────────────────
+# ── QUICK SORT ITERATIF ─────────────────────────────────────
 def quick_sort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left  = [x for x in arr if x < pivot]
-    mid   = [x for x in arr if x == pivot]
-    right = [x for x in arr if x > pivot]
-    return quick_sort(left) + mid + quick_sort(right)
+    arr = arr.copy()
+    stack = [(0, len(arr) - 1)]
+    while stack:
+        low, high = stack.pop()
+        if low >= high:
+            continue
+        pivot = arr[high]
+        i = low - 1
+        for j in range(low, high):
+            if arr[j] <= pivot:
+                i += 1
+                arr[i], arr[j] = arr[j], arr[i]
+        arr[i + 1], arr[high] = arr[high], arr[i + 1]
+        p = i + 1
+        stack.append((low, p - 1))
+        stack.append((p + 1, high))
+    return arr
 
 
-# ── MERGE SORT ──────────────────────────────────────────────
+# ── MERGE SORT ITERATIF ─────────────────────────────────────
 def merge_sort(arr):
-    if len(arr) <= 1:
-        return arr
-    mid   = len(arr) // 2
-    left  = merge_sort(arr[:mid])
-    right = merge_sort(arr[mid:])
-    return merge(left, right)
-
-def merge(left, right):
-    result = []
-    i = j = 0
-    while i < len(left) and j < len(right):
-        if left[i] <= right[j]:
-            result.append(left[i])
-            i += 1
-        else:
-            result.append(right[j])
-            j += 1
-    result.extend(left[i:])
-    result.extend(right[j:])
-    return result
+    arr = arr.copy()
+    n = len(arr)
+    width = 1
+    while width < n:
+        for i in range(0, n, 2 * width):
+            left  = i
+            mid   = min(i + width, n)
+            right = min(i + 2 * width, n)
+            merged = []
+            l, r = left, mid
+            while l < mid and r < right:
+                if arr[l] <= arr[r]:
+                    merged.append(arr[l]); l += 1
+                else:
+                    merged.append(arr[r]); r += 1
+            merged.extend(arr[l:mid])
+            merged.extend(arr[r:right])
+            arr[left:right] = merged
+        width *= 2
+    return arr
 
 
 # ── BENCHMARK RUNNER ────────────────────────────────────────
-def run_sort(label, sort_fn, data):
+def run_sort(sort_fn, data):
     monitor = ResourceMonitor()
     monitor.start()
     start   = time.perf_counter()
-    sort_fn(data.copy())
+    sort_fn(data)
     elapsed = time.perf_counter() - start
     monitor.stop()
     throughput = len(data) / elapsed if elapsed > 0 else 0
@@ -97,8 +107,7 @@ def run():
     print(f"  {'Dataset':<20} {'Algoritma':<15} {'Exec Time (s)':<16} {'CPU (%)':<12} {'Throughput'}")
     print("-" * 70)
 
-    # Quick Sort hanya sampai 1jt karena rekursi Python ada batasnya
-    sizes = [100_000, 1_000_000, 5_000_000]
+    sizes   = [100_000, 1_000_000, 5_000_000]
     results = []
 
     for n in sizes:
@@ -106,26 +115,17 @@ def run():
         data  = [random.randint(0, 1_000_000) for _ in range(n)]
         label = f"{n:,} data"
 
-        # Quick Sort — skip 5 juta karena Python recursion limit
-        if n <= 1_000_000:
-            elapsed, cpu, tp = run_sort(label, quick_sort, data)
-            print(f"  {label:<20} {'Quick Sort':<15} {elapsed:<16.4f} {cpu:<12.2f} {tp:,.0f}")
-            results.append({"dataset": label, "algoritma": "Quick Sort", "exec_time": elapsed, "cpu_usage": cpu, "throughput": tp})
-        else:
-            print(f"  {label:<20} {'Quick Sort':<15} {'skip (recursion limit)':<16}")
-
-        # Merge Sort — skip 5 juta karena Python recursion limit
-        if n <= 1_000_000:
-            elapsed, cpu, tp = run_sort(label, merge_sort, data)
-            print(f"  {label:<20} {'Merge Sort':<15} {elapsed:<16.4f} {cpu:<12.2f} {tp:,.0f}")
-            results.append({"dataset": label, "algoritma": "Merge Sort", "exec_time": elapsed, "cpu_usage": cpu, "throughput": tp})
-        else:
-            print(f"  {label:<20} {'Merge Sort':<15} {'skip (recursion limit)':<16}")
-
-        # Built-in Sort — semua ukuran
-        elapsed, cpu, tp = run_sort(label, lambda d: d.sort(), data)
-        print(f"  {label:<20} {'Built-in Sort':<15} {elapsed:<16.4f} {cpu:<12.2f} {tp:,.0f}")
-        results.append({"dataset": label, "algoritma": "Built-in", "exec_time": elapsed, "cpu_usage": cpu, "throughput": tp})
+        for nama, fn in [("Quick Sort", quick_sort), ("Merge Sort", merge_sort), ("Built-in Sort", lambda d: sorted(d))]:
+            elapsed, cpu, tp = run_sort(fn, data)
+            print(f"  {label:<20} {nama:<15} {elapsed:<16.4f} {cpu:<12.2f} {tp:,.0f}")
+            results.append({
+                "dataset":    label,
+                "algoritma":  nama,
+                "exec_time":  elapsed,
+                "cpu_usage":  cpu,
+                "throughput": tp,
+                "skip":       False,
+            })
 
         print("-" * 70)
         del data
